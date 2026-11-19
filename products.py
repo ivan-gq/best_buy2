@@ -54,7 +54,67 @@ class Product:
         self.set_quantity(self.quantity - quantity)
         return float(self.price * quantity)
 
-# if __name__ == "__main__":
+class NonStockedProduct(Product):
+    def __init__(self, name: str, price: float):
+        super().__init__(name, price, 0)
+        self.activate()
+
+    def set_quantity(self, quantity: int) -> None:
+        if not isinstance(quantity, int) or isinstance(quantity, bool):
+            raise TypeError(
+                f"Expected quantity to be an int, got {type(quantity).__name__}"
+            )
+        if quantity < 0:
+            raise ValueError(f"Quantity cannot be negative, got {quantity}")
+
+        self.quantity = 0
+        self.activate()
+
+    def buy(self, quantity: int) -> float:
+        if not isinstance(quantity, int) or isinstance(quantity, bool):
+            raise TypeError(
+                f"Expected quantity to be an int, got {type(quantity).__name__}"
+            )
+        if quantity < 1:
+            raise ValueError("Quantity cannot be smaller than 1")
+
+        return float(self.price * quantity)
+
+    def show(self):
+        print(f"{self.name}, Price: {self.price}, Quantity: Unlimited")
+
+
+class LimitedProduct(Product):
+    def __init__(self, name: str, price: float, quantity: int, maximum: int):
+        if not isinstance(maximum, int) or isinstance(maximum, bool):
+            raise TypeError(
+                f"Expected maximum to be an int, got {type(maximum).__name__}"
+            )
+        if maximum < 1:
+            raise ValueError(f"Maximum per order must be at least 1, got {maximum}")
+
+        super().__init__(name, price, quantity)
+        self.maximum = maximum
+
+    def buy(self, quantity: int) -> float:
+        if not isinstance(quantity, int) or isinstance(quantity, bool):
+            raise TypeError(
+                f"Expected quantity to be an int, got {type(quantity).__name__}"
+            )
+        if quantity > self.maximum:
+            raise ValueError(
+                f"Cannot buy {quantity} of {self.name}; maximum per order is {self.maximum}"
+            )
+
+        return super().buy(quantity)
+
+    def show(self):
+        print(
+            f"{self.name}, Price: {self.price}, Quantity: {self.quantity}, Maximum: {self.maximum}"
+        )
+
+#if __name__ == "__main__":
+
 #     bose = Product("Bose QuietComfort Earbuds", price=250, quantity=500)
 #     mac = Product("MacBook Air M2", price=1450, quantity=101)
 

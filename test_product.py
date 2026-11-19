@@ -1,5 +1,5 @@
 import pytest
-from products import Product
+from products import Product, NonStockedProduct, LimitedProduct
 
 
 def test_create_normal_product():
@@ -36,3 +36,22 @@ def test_buy_larger_quantity_than_exists_raises_exception():
     product = Product("MacBook Air M2", price=1450, quantity=5)
     with pytest.raises(ValueError):
         product.buy(10)
+
+def test_non_stocked_product_stays_at_zero_and_active():
+    license_prod = NonStockedProduct("Windows License", price=125)
+    assert license_prod.get_quantity() == 0
+    assert license_prod.is_active() is True
+
+    total = license_prod.buy(3)
+    assert total == 375.0
+    assert license_prod.get_quantity() == 0
+    assert license_prod.is_active() is True
+
+
+def test_limited_product_enforces_maximum_per_order():
+    shipping = LimitedProduct("Shipping", price=10, quantity=250, maximum=1)
+    assert shipping.buy(1) == 10.0
+    assert shipping.get_quantity() == 249
+
+    with pytest.raises(ValueError):
+        shipping.buy(2)
