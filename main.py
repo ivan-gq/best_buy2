@@ -1,5 +1,7 @@
 import products
+import promotions
 import store
+
 
 def print_menu():
     print("\tStore Menu\n\t----------")
@@ -8,20 +10,22 @@ def print_menu():
     print("3. Make an order")
     print("4. Quit")
 
+
 def make_order(best_buy):
     prods = best_buy.get_all_products()
     order = []
-    # Use enumerate for cleaner indexing
+
     for i, product in enumerate(prods, start=1):
-        if product.active:
-            print(f"{i}. {product.name}, price: ${product.price}, quantity: {product.quantity}")
+        print(f"{i}. ", end="")
+        product.show()
+
     while True:
-        menu_choice = input("Select # of product: ")
+        menu_choice = input("Select # of product (or press Enter to finish): ")
         if not menu_choice:
             break
         try:
             prod_index = int(menu_choice)
-            if not (0 < prod_index < len(prods)+1):
+            if not (0 < prod_index <= len(prods)):
                 print("Error: Product number out of range.")
                 continue
 
@@ -29,7 +33,7 @@ def make_order(best_buy):
             quantity = int(input("Enter amount: "))
 
             if quantity <= 0:
-                print("Error: quantity must be greater the zero")
+                print("Error: quantity must be greater than zero")
                 continue
 
             if (
@@ -39,33 +43,49 @@ def make_order(best_buy):
             ):
                 quantity = selected_product.quantity
                 print("Stock is empty. Adjusting to remaining stock.")
-                order.append((selected_product, quantity))
-                selected_product.buy(quantity)
-                selected_product.deactivate()
+                subtotal = selected_product.buy(quantity)
+                order.append((selected_product, quantity, subtotal))
 
-            elif selected_product.active:    
-                order.append((selected_product, quantity))
-                selected_product.buy(quantity)
+            elif selected_product.active:
+                subtotal = selected_product.buy(quantity)
+                order.append((selected_product, quantity, subtotal))
                 print(f"Added {selected_product.name}, quantity: {quantity}")
 
             else:
-                print("Product sold out")            
+                print("Product sold out")
 
-        except ValueError:
-            print("Value Error")
-    if order:        
-        print("---ORDER SUMMERY---")
-        for item, qty in order:
-            print(f"Item: {item.name}, Quantity: {qty}")
+        except ValueError as e:
+            print(f"Error: {e}")
+
+    if order:
+        print("---ORDER SUMMARY---")
+        total_cost = 0.0
+        for item, qty, subtotal in order:
+            print(f"Item: {item.name}, Quantity: {qty}, Subtotal: ${subtotal:.2f}")
+            total_cost += subtotal
+        print(f"Total order cost: ${total_cost:.2f}")
+
 
 def main():
     # setup initial stock of inventory
-    product_list = [ products.Product("MacBook Air M2", price=1450, quantity=100),
-                    products.Product("Bose QuietComfort Earbuds", price=250, quantity=500),
-                    products.Product("Google Pixel 7", price=500, quantity=250),
-                    products.NonStockedProduct("Windows License", price=125),
-                    products.LimitedProduct("Shipping", price=10, quantity=250, maximum=1)
-                ]
+    product_list = [
+        products.Product("MacBook Air M2", price=1450, quantity=100),
+        products.Product("Bose QuietComfort Earbuds", price=250, quantity=500),
+        products.Product("Google Pixel 7", price=500, quantity=250),
+        products.NonStockedProduct("Windows License", price=125),
+        products.LimitedProduct("Shipping", price=10, quantity=250, maximum=1),
+    ]
+
+    # Create promotion catalog
+    second_half_price = promotions.SecondHalfPrice("Second Half price!")
+    third_one_free = promotions.ThirdOneFree("Third One Free!")
+    thirty_percent = promotions.PercentDiscount("30% off!", percent=30)
+
+    # Add promotions to products
+    product_list[0].set_promotion(second_half_price)
+    product_list[1].set_promotion(third_one_free)
+    product_list[3].set_promotion(thirty_percent)
+
     best_buy = store.Store(product_list)
 
     while True:
@@ -92,6 +112,7 @@ def main():
                 print("number must be in menu")
         except ValueError:
             print("Value Error: Type a number")
+
 
 if __name__ == "__main__":
     main()

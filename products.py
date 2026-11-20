@@ -1,3 +1,5 @@
+from promotions import Promotion
+
 class Product:
     def __init__(self, name: str, price: float, quantity: int):
         if not isinstance(name, str) or not name.strip():
@@ -10,6 +12,7 @@ class Product:
         self.name = name
         self.price = price
         self.active = True
+        self.promotion: Promotion | None = None
         self.set_quantity(quantity)
 
     def get_quantity(self) -> int:
@@ -37,7 +40,18 @@ class Product:
         self.active = False
 
     def show(self):
-        print(f"{self.name}, Price: {self.price}, Quantity: {self.quantity}")
+        promo_text = f", Promotion: {self.promotion.name}" if self.promotion else ""
+        print(f"{self.name}, Price: {self.price}, Quantity: {self.quantity}, {promo_text}")
+
+    def get_promotion(self) -> Promotion | None:
+        return self.promotion
+
+    def set_promotion(self, promotion: Promotion | None) -> None:
+        if promotion is not None and not isinstance(promotion, Promotion):
+            raise TypeError(
+                f"Expected a Promotion instance or None, got {type(promotion).__name__}"
+            )
+        self.promotion = promotion
 
     def buy(self, quantity: int) -> float:
         if not isinstance(quantity, int) or isinstance(quantity, bool):
@@ -52,6 +66,8 @@ class Product:
             )
 
         self.set_quantity(self.quantity - quantity)
+        if self.promotion is not None:
+            return float(self.promotion.apply_promotion(self, quantity))
         return float(self.price * quantity)
 
 class NonStockedProduct(Product):
@@ -77,11 +93,13 @@ class NonStockedProduct(Product):
             )
         if quantity < 1:
             raise ValueError("Quantity cannot be smaller than 1")
-
+        if self.promotion is not None:
+            return float(self.promotion.apply_promotion(self, quantity))
         return float(self.price * quantity)
 
     def show(self):
-        print(f"{self.name}, Price: {self.price}, Quantity: Unlimited")
+        promo_text = f", Promotion: {self.promotion.name}" if self.promotion else ""
+        print(f"{self.name}, Price: {self.price}, Quantity: Unlimited, {promo_text}")
 
 
 class LimitedProduct(Product):
@@ -109,8 +127,9 @@ class LimitedProduct(Product):
         return super().buy(quantity)
 
     def show(self):
+        promo_text = f", Promotion: {self.promotion.name}" if self.promotion else ""
         print(
-            f"{self.name}, Price: {self.price}, Quantity: {self.quantity}, Maximum: {self.maximum}"
+            f"{self.name}, Price: {self.price}, Quantity: {self.quantity}, Maximum: {self.maximum}, {promo_text}"
         )
 
 #if __name__ == "__main__":
