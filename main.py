@@ -95,7 +95,7 @@ def main():
             if menu_choice == 1:
                 print("------")
                 for product in best_buy.get_all_products():
-                    product.show()
+                    print(product)
                 print("------")
 
             elif menu_choice == 2:

@@ -4,7 +4,6 @@ from promotions import Promotion, PercentDiscount, SecondHalfPrice, ThirdOneFree
 from store import Store
 
 
-# 1. Abstract Base Class & Validation Tests
 def test_cannot_instantiate_abstract_promotion():
     with pytest.raises(TypeError):
         Promotion("Generic Promo")
@@ -21,43 +20,35 @@ def test_invalid_promotion_inputs_raise_errors():
         PercentDiscount("Invalid Negative", percent=-5)
 
 
-# 2. Isolated Promotion Pricing Math Tests
 def test_percent_discount_calculation():
     mac = Product("MacBook Air M2", price=1450, quantity=10)
     promo = PercentDiscount("20% off!", percent=20)
     mac.set_promotion(promo)
 
     assert mac.buy(2) == 2320.0
-    assert mac.get_quantity() == 8
+    assert mac.quantity == 8
 
 
 def test_second_half_price_odd_and_even_quantities():
     mac = Product("MacBook Air M2", price=1450, quantity=10)
     mac.set_promotion(SecondHalfPrice("Second Half price!"))
 
-    # 1 item -> full price (1450)
     assert mac.buy(1) == 1450.0
-    # 2 items -> 1450 + 725 (2175)
     assert mac.buy(2) == 2175.0
-    # 3 items -> 1450 + 725 + 1450 (3625)
     assert mac.buy(3) == 3625.0
-    assert mac.get_quantity() == 4
+    assert mac.quantity == 4
 
 
 def test_third_one_free_boundary_quantities():
     earbuds = Product("Bose QuietComfort Earbuds", price=250, quantity=20)
     earbuds.set_promotion(ThirdOneFree("Third One Free!"))
 
-    # 2 items -> pay for 2 (500)
     assert earbuds.buy(2) == 500.0
-    # 3 items -> pay for 2, 1 free (500)
     assert earbuds.buy(3) == 500.0
-    # 4 items -> pay for 3, 1 free (750)
     assert earbuds.buy(4) == 750.0
-    assert earbuds.get_quantity() == 11
+    assert earbuds.quantity == 11
 
 
-# 3. Product Promotion Lifecycle & Subclass Compatibility
 def test_set_swap_and_remove_promotion():
     pixel = Product("Google Pixel 7", price=500, quantity=10)
     assert pixel.get_promotion() is None
@@ -66,12 +57,10 @@ def test_set_swap_and_remove_promotion():
     pixel.set_promotion(promo_10)
     assert pixel.get_promotion() is promo_10
 
-    # Remove promotion
     pixel.set_promotion(None)
     assert pixel.get_promotion() is None
     assert pixel.buy(1) == 500.0
 
-    # Reject non-Promotion objects
     with pytest.raises(TypeError):
         pixel.set_promotion("10% off!")
 
@@ -82,11 +71,10 @@ def test_non_stocked_product_with_promotion():
 
     total = windows.buy(2)
     assert total == 175.0
-    assert windows.get_quantity() == 0
+    assert windows.quantity == 0
     assert windows.is_active() is True
 
 
-# 4. Testing show() Console Output via capsys
 def test_show_displays_and_hides_promotion(capsys):
     windows = NonStockedProduct("Windows License", price=125)
     windows.set_promotion(PercentDiscount("30% off!", percent=30))
@@ -101,7 +89,6 @@ def test_show_displays_and_hides_promotion(capsys):
     assert "30% off!" not in captured_without_promo
 
 
-# 5. Full Store Catalog Integration Test
 def test_store_order_with_full_promotion_catalog():
     product_list = [
         Product("MacBook Air M2", price=1450, quantity=100),
@@ -117,7 +104,6 @@ def test_store_order_with_full_promotion_catalog():
 
     best_buy = Store(product_list)
 
-    # 2175.0 (2 Macs) + 500.0 (3 Earbuds) + 500.0 (1 Pixel) + 175.0 (2 Licenses) + 10.0 (1 Shipping)
     total_order = best_buy.order([
         (product_list[0], 2),
         (product_list[1], 3),

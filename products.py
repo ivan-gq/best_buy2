@@ -1,5 +1,7 @@
 from promotions import Promotion
+from functools import total_ordering
 
+@total_ordering
 class Product:
     def __init__(self, name: str, price: float, quantity: int):
         if not isinstance(name, str) or not name.strip():
@@ -13,12 +15,35 @@ class Product:
         self.price = price
         self.active = True
         self.promotion: Promotion | None = None
-        self.set_quantity(quantity)
+        self.quantity = quantity
 
-    def get_quantity(self) -> int:
-        return self.quantity
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Product):
+            return NotImplemented
+        return self.price == other.price
 
-    def set_quantity(self, quantity: int) -> None:
+    def __gt__(self, other: object) -> bool:
+        if not isinstance(other, Product):
+            return NotImplemented
+        return self.price > other.price
+
+    @property
+    def price(self):
+        return self._price
+    
+    @price.setter
+    def price(self, price):
+        if price < 0:
+            raise ValueError("Negative age not allowed")
+        else:
+            self._price = price
+
+    @property
+    def quantity(self) -> int:
+        return self._quantity
+    
+    @quantity.setter
+    def quantity(self, quantity: int) -> None:
         if not isinstance(quantity, int) or isinstance(quantity, bool):
             raise TypeError(
                 f"Expected quantity to be an int, got {type(quantity).__name__}"
@@ -26,8 +51,8 @@ class Product:
         if quantity < 0:
             raise ValueError(f"Quantity cannot be negative, got {quantity}")
 
-        self.quantity = quantity
-        if self.quantity == 0:
+        self._quantity = quantity
+        if self._quantity == 0:
             self.deactivate()
 
     def is_active(self) -> bool:
@@ -39,9 +64,12 @@ class Product:
     def deactivate(self):
         self.active = False
 
-    def show(self):
+    def __str__(self):
         promo_text = f", Promotion: {self.promotion.name}" if self.promotion else ""
-        print(f"{self.name}, Price: {self.price}, Quantity: {self.quantity}, {promo_text}")
+        return f"{self.name}, Price: {self.price}, Quantity: {self.quantity}, {promo_text}"
+
+    def show(self):
+        print(self)
 
     def get_promotion(self) -> Promotion | None:
         return self.promotion
@@ -65,17 +93,20 @@ class Product:
                 f"Cannot buy {quantity} units; only {self.quantity} in stock"
             )
 
-        self.set_quantity(self.quantity - quantity)
+        self.quantity = self.quantity - quantity
         if self.promotion is not None:
             return float(self.promotion.apply_promotion(self, quantity))
         return float(self.price * quantity)
+
+
 
 class NonStockedProduct(Product):
     def __init__(self, name: str, price: float):
         super().__init__(name, price, 0)
         self.activate()
 
-    def set_quantity(self, quantity: int) -> None:
+    @Product.quantity.setter
+    def quantity(self, quantity: int) -> None:
         if not isinstance(quantity, int) or isinstance(quantity, bool):
             raise TypeError(
                 f"Expected quantity to be an int, got {type(quantity).__name__}"
@@ -83,7 +114,7 @@ class NonStockedProduct(Product):
         if quantity < 0:
             raise ValueError(f"Quantity cannot be negative, got {quantity}")
 
-        self.quantity = 0
+        self._quantity = 0
         self.activate()
 
     def buy(self, quantity: int) -> float:
@@ -97,9 +128,10 @@ class NonStockedProduct(Product):
             return float(self.promotion.apply_promotion(self, quantity))
         return float(self.price * quantity)
 
-    def show(self):
+    def __str__(self):
         promo_text = f", Promotion: {self.promotion.name}" if self.promotion else ""
-        print(f"{self.name}, Price: {self.price}, Quantity: Unlimited, {promo_text}")
+        return f"{self.name}, Price: {self.price}, Quantity: Unlimited, {promo_text}"
+
 
 
 class LimitedProduct(Product):
@@ -126,11 +158,9 @@ class LimitedProduct(Product):
 
         return super().buy(quantity)
 
-    def show(self):
+    def __str__(self):
         promo_text = f", Promotion: {self.promotion.name}" if self.promotion else ""
-        print(
-            f"{self.name}, Price: {self.price}, Quantity: {self.quantity}, Maximum: {self.maximum}, {promo_text}"
-        )
+        return f"{self.name}, Price: {self.price}, Quantity: {self.quantity}, Maximum: {self.maximum}, {promo_text}"
 
 #if __name__ == "__main__":
 

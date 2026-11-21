@@ -16,7 +16,6 @@ def best_buy_store():
 
 
 def test_store_total_quantity(best_buy_store):
-    # 100 + 500 + 250 + 0 + 250 = 1100
     assert best_buy_store.get_total_quantity() == 1100
 
 
@@ -24,7 +23,6 @@ def test_store_get_all_products_excludes_inactive(best_buy_store):
     all_active = best_buy_store.get_all_products()
     assert len(all_active) == 5
 
-    # Deactivate MacBook Air M2 by buying all 100 units
     macbook = all_active[0]
     macbook.buy(100)
 
@@ -43,10 +41,10 @@ def test_store_order_mixed_products(best_buy_store):
     ])
 
     assert total == 1450 + 250 + 10
-    assert macbook.get_quantity() == 99
-    assert windows.get_quantity() == 0
+    assert macbook.quantity == 99
+    assert windows.quantity == 0
     assert windows.is_active() is True
-    assert shipping.get_quantity() == 249
+    assert shipping.quantity == 249
 
 
 def test_store_order_exceeding_limited_product_raises(best_buy_store):
@@ -59,3 +57,11 @@ def test_store_order_unlisted_product_raises(best_buy_store):
     unlisted = Product("iPad Pro", price=999, quantity=10)
     with pytest.raises(ValueError):
         best_buy_store.order([(unlisted, 1)])
+
+
+def test_store_contains_magic_method(best_buy_store):
+    macbook = best_buy_store.get_all_products()[0]
+    unlisted = Product("iPad Pro", price=999, quantity=10)
+
+    assert (macbook in best_buy_store) is True
+    assert (unlisted in best_buy_store) is False

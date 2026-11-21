@@ -16,7 +16,7 @@ class Store:
     def get_total_quantity(self):
         total_quantity = 0
         for product in self.products:
-            total_quantity += product.get_quantity()
+            total_quantity += product.quantity
         return total_quantity
 
     def get_all_products(self) -> list[products.Product]:
@@ -34,6 +34,9 @@ class Store:
                 else:
                     raise ValueError("Not available in the store")
             return total_price
+
+    def __contains__(self, product: object) -> bool:
+        return product in self.products
 
 
 # if __name__ == "__main__":
